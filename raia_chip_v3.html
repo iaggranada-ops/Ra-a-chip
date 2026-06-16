@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>RAIA — Alta chip</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f0; min-height: 100vh; }
+#keySetup { display:none; position:fixed; inset:0; background:#1a7a4a; z-index:9999; align-items:center; justify-content:center; padding:24px; }
+#keySetup.show { display:flex; }
+.key-card { background:white; border-radius:16px; padding:24px; width:100%; max-width:400px; text-align:center; }
+.key-icon { font-size:40px; margin-bottom:12px; }
+.key-title { font-size:18px; font-weight:600; color:#1a1a1a; margin-bottom:8px; }
+.key-desc { font-size:13px; color:#666; margin-bottom:16px; line-height:1.5; }
+.key-input { width:100%; border:1px solid #ddd; border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:12px; }
+.key-btn { width:100%; background:#1a7a4a; color:white; border:none; border-radius:10px; padding:14px; font-size:15px; font-weight:600; cursor:pointer; }
+.header { background: #1a7a4a; padding: 14px 16px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 100; }
+.header-title { color: white; font-size: 17px; font-weight: 600; }
+.header-sub { color: rgba(255,255,255,0.75); font-size: 12px; margin-top: 1px; }
+.steps { display: flex; background: #145f38; padding: 10px 16px; }
+.step { flex: 1; text-align: center; color: rgba(255,255,255,0.45); font-size: 11px; padding: 4px 0; border-bottom: 2px solid transparent; cursor: pointer; }
+.step.active { color: white; border-bottom-color: #7ed9a8; font-weight: 600; }
+.step.done { color: #7ed9a8; }
+.content { padding: 16px; max-width: 600px; margin: 0 auto; }
+.section { background: white; border-radius: 14px; padding: 16px; margin-bottom: 14px; border: 0.5px solid #e0e8e3; }
+.section-title { font-size: 12px; font-weight: 600; color: #1a7a4a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+.photo-btn { width: 100%; border: 2px dashed #1a7a4a; border-radius: 12px; padding: 20px; text-align: center; background: #f0faf4; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 10px; }
+.photo-btn input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.photo-btn svg { width: 32px; height: 32px; stroke: #1a7a4a; fill: none; stroke-width: 1.5; margin-bottom: 6px; }
+.photo-btn p { color: #1a7a4a; font-size: 14px; font-weight: 600; margin: 0; }
+.photo-btn small { color: #4a9a6a; font-size: 12px; }
+.photo-btn.done { background: #e8f5ee; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.field-row.single { grid-template-columns: 1fr; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; color: #666; font-weight: 500; }
+.field input, .field select { border: 1px solid #dde8e3; border-radius: 8px; padding: 9px 11px; font-size: 14px; color: #1a1a1a; background: white; width: 100%; -webkit-appearance: none; }
+.field input.extracted { background: #f0faf4; border-color: #7ed9a8; color: #145f38; }
+.chip-display { background: #1a1a2e; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.chip-num { font-family: 'Courier New', monospace; font-size: 16px; color: #7ed9a8; font-weight: 700; letter-spacing: 1px; word-break: break-all; }
+.chip-label { font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 2px; }
+.fixed-badge { display: inline-flex; align-items: center; gap: 5px; background: #e8f5ee; border-radius: 6px; padding: 5px 10px; font-size: 12px; color: #1a7a4a; font-weight: 500; margin-right: 6px; margin-bottom: 6px; }
+.loading { display: none; text-align: center; padding: 16px; }
+.loading.show { display: block; }
+.spinner { width: 28px; height: 28px; border: 3px solid #e0e8e3; border-top-color: #1a7a4a; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading p { font-size: 13px; color: #888; }
+.btn-primary { width: 100%; background: #1a7a4a; color: white; border: none; border-radius: 12px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.nav-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+.btn-back { background: white; color: #555; border: 1px solid #dde; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; }
+.btn-next { background: #1a7a4a; color: white; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; font-size: 14px; }
+.summary-row:last-child { border-bottom: none; }
+.summary-label { color: #888; }
+.summary-value { color: #1a1a1a; font-weight: 500; text-align: right; max-width: 60%; }
+.panel { display: none; }
+.panel.active { display: block; }
+.key-reset { font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; padding: 8px; cursor: pointer; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div id="keySetup">
+  <div class="key-card">
+    <div class="key-icon">🔑</div>
+    <div class="key-title">Configuración inicial</div>
+    <div class="key-desc">Introduce tu clave API de Anthropic.<br>Solo se pide una vez — el iPad la recuerda.</div>
+    <input type="password" id="apiKeyInput" class="key-input" placeholder="sk-ant-api03-...">
+    <button class="key-btn" onclick="saveApiKey()">Guardar y continuar</button>
+  </div>
+</div>
+
+<div class="header">
+  <div>
+    <div class="header-title">🐾 RAIA — Alta chip</div>
+    <div class="header-sub">Registro Andaluz de Identificación Animal</div>
+  </div>
+  <span onclick="resetKey()" class="key-reset">⚙ Clave</span>
+</div>
+
+<div class="steps">
+  <div class="step active" id="tab1" onclick="goTo(1)">Propietario</div>
+  <div class="step" id="tab2" onclick="goTo(2)">Chip</div>
+  <div class="step" id="tab3" onclick="goTo(3)">Animal</div>
+  <div class="step" id="tab4" onclick="goTo(4)">Enviar</div>
+</div>
+
+<div class="content">
+
+  <!-- PANEL 1: PROPIETARIO -->
+  <div class="panel active" id="panel1">
+    <div class="section">
+      <div class="section-title">📷 Foto del DNI</div>
+      <div class="photo-btn" id="dniBtn1">
+        <input type="file" accept="image/*" capture="environment" onchange="handleDNI(event,'front')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+        <p>Cara delantera</p>
+        <small>Nombre, apellidos, DNI</small>
+      </div>
+      <div class="photo-btn" id="dniBtn2">
+        <input type="file" accept="image/*" capture="environment" onchange="handleDNI(event,'back')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h10M7 12h6"/></svg>
+        <p>Cara trasera</p>
+        <small>Dirección</small>
+      </div>
+      <div class="loading" id="dniLoading"><div class="spinner"></div><p>Leyendo DNI...</p></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Datos del propietario</div>
+      <div class="field-row">
+        <div class="field"><label>Nombre</label><input type="text" id="ownerNombre" placeholder="Nombre"></div>
+        <div class="field"><label>DNI / NIE</label><input type="text" id="ownerDNI" placeholder="00000000X"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Primer apellido</label><input type="text" id="ownerAp1" placeholder="Primer apellido"></div>
+        <div class="field"><label>Segundo apellido</label><input type="text" id="ownerAp2" placeholder="Segundo apellido"></div>
+      </div>
+      <div class="field-row single">
+        <div class="field"><label>Dirección</label><input type="text" id="ownerDir" placeholder="Calle, número, piso..."></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Código postal</label><input type="text" id="ownerCP" placeholder="18000" maxlength="5" inputmode="numeric"></div>
+        <div class="field"><label>Teléfono</label><input type="tel" id="ownerTel" placeholder="612 345 678"></div>
+      </div>
+      <div class="field-row single">
+        <div class="field"><label>Email (opcional)</label><input type="email" id="ownerEmail" placeholder="correo@ejemplo.com"></div>
+      </div>
+    </div>
+    <button class="btn-next" onclick="goTo(2)" style="width:100%;padding:15px;border-radius:12px;font-size:16px;font-weight:600;">Siguiente → Chip</button>
+  </div>
+
+  <!-- PANEL 2: CHIP -->
+  <div class="panel" id="panel2">
+    <div class="section">
+      <div class="section-title">📷 Foto etiqueta del chip</div>
+      <div class="photo-btn" id="chipBtn">
+        <input type="file" accept="image/*" capture="environment" onchange="handleChip(event)">
+        <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M7 4v-1M12 4v-1M17 4v-1M7 21v-1M12 21v-1M17 21v-1M4 7H3M4 12H3M4 17H3M21 7h-1M21 12h-1M21 17h-1"/></svg>
+        <p>Etiqueta / código de barras</p>
+        <small>El número de 15 dígitos del microchip</small>
+      </div>
+      <div class="loading" id="chipLoading"><div class="spinner"></div><p>Leyendo número de chip...</p></div>
+      <div id="chipResult" style="display:none; margin-top:10px;">
+        <div class="chip-display">
+          <div><div class="chip-label">Nº microchip detectado</div><div class="chip-num" id="chipNumShow">—</div></div>
+        </div>
+        <div class="field"><label>Corregir si es necesario</label><input type="text" id="chipInput" maxlength="15" inputmode="numeric" placeholder="978141041163875"></div>
+      </div>
+      <div id="chipManual" style="display:none; margin-top:10px;">
+        <div class="field"><label>Introducir manualmente</label><input type="text" id="chipManualInput" maxlength="15" inputmode="numeric" placeholder="15 dígitos"></div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goTo(1)">← Atrás</button>
+      <button class="btn-next" onclick="goTo(3)">Animal →</button>
+    </div>
+  </div>
+
+  <!-- PANEL 3: ANIMAL -->
+  <div class="panel" id="panel3">
+    <div class="section">
+      <div class="section-title">Datos fijos automáticos</div>
+      <span class="fixed-badge">✓ Especie: Perro</span>
+      <span class="fixed-badge">✓ Castrado: No</span>
+      <span class="fixed-badge">✓ Implantación: Lado izdo. cuello</span>
+    </div>
+    <div class="section">
+      <div class="section-title">Datos del animal</div>
+      <div class="field-row">
+        <div class="field"><label>Nombre</label><input type="text" id="anNombre" placeholder="Nombre del animal"></div>
+        <div class="field"><label>Sexo</label><select id="anSexo"><option value="">— Seleccionar —</option><option>Macho</option><option>Hembra</option><option>Desconocido</option></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Raza</label><input type="text" id="anRaza" placeholder="Raza o mestizo"></div>
+        <div class="field"><label>F. nacimiento</label><input type="date" id="anFecha"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Color / capa</label><input type="text" id="anColor" placeholder="Ej: negro, tricolor..."></div>
+        <div class="field"><label>Tamaño</label><select id="anTamano"><option value="">— Seleccionar —</option><option>&lt;2 Kg</option><option>2-5 Kg</option><option>5-10 Kg</option><option>10-20 Kg</option><option>20-40 Kg</option><option>&gt;40 Kg</option></select></div>
+      </div>
+      <div class="field-row single">
+        <div class="field"><label>Finalidad</label><select id="anFinalidad"><option value="">— Seleccionar —</option><option>Compañía</option><option>Caza</option><option>Guarda</option><option>Pastoreo</option><option>Otros</option></select></div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goTo(2)">← Atrás</button>
+      <button class="btn-next" onclick="goTo(4)">Revisar →</button>
+    </div>
+  </div>
+
+  <!-- PANEL 4: RESUMEN -->
+  <div class="panel" id="panel4">
+    <div class="section"><div class="section-title">Resumen — Propietario</div><div id="summaryOwner"></div></div>
+    <div class="section"><div class="section-title">Resumen — Animal</div><div id="summaryAnimal"></div></div>
+    <button class="btn-primary" onclick="openRAIA()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Abrir RAIA con estos datos
+    </button>
+    <button class="btn-back" onclick="goTo(3)" style="width:100%;margin-top:10px;padding:12px;border-radius:12px;cursor:pointer;">← Corregir algo</button>
+  </div>
+
+</div>
+
+<script>
+function getKey() { return localStorage.getItem('raia_api_key') || ''; }
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if(!key.startsWith('sk-ant-')) { alert('Clave no válida. Debe empezar por sk-ant-'); return; }
+  localStorage.setItem('raia_api_key', key);
+  document.getElementById('keySetup').classList.remove('show');
+}
+
+function resetKey() {
+  if(confirm('¿Cambiar la clave API?')) {
+    localStorage.removeItem('raia_api_key');
+    document.getElementById('apiKeyInput').value = '';
+    document.getElementById('keySetup').classList.add('show');
+  }
+}
+
+function checkKey() {
+  if(!getKey()) document.getElementById('keySetup').classList.add('show');
+}
+
+function goTo(n) {
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===n-1));
+  document.querySelectorAll('.step').forEach((s,i) => {
+    s.classList.remove('active','done');
+    if(i===n-1) s.classList.add('active');
+    if(i<n-1) s.classList.add('done');
+  });
+  if(n===4) buildSummary();
+  window.scrollTo(0,0);
+}
+
+async function callClaude(prompt, imageBase64, mimeType) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': getKey(),
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mimeType, data: imageBase64 } },
+        { type: 'text', text: prompt }
+      ]}]
+    })
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.content[0].text;
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function handleDNI(event, side) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const btn = side==='front' ? document.getElementById('dniBtn1') : document.getElementById('dniBtn2');
+  btn.classList.add('done');
+  btn.querySelector('p').textContent = side==='front' ? '✓ Cara delantera' : '✓ Cara trasera';
+  document.getElementById('dniLoading').classList.add('show');
+  try {
+    const b64 = await fileToBase64(file);
+    const prompt = side==='front'
+      ? `Analiza este DNI español. Extrae SOLO estos campos en JSON sin markdown: {"nombre":"","apellido1":"","apellido2":"","dni":""} Solo JSON.`
+      : `Analiza la parte trasera de este DNI español. Extrae SOLO estos campos en JSON sin markdown: {"direccion":""} La dirección es la calle/número/piso. Solo JSON.`;
+    const result = await callClaude(prompt, b64, file.type);
+    const parsed = JSON.parse(result.replace(/```json|```/g,'').trim());
+    if(side==='front') {
+      if(parsed.nombre) { document.getElementById('ownerNombre').value=parsed.nombre; document.getElementById('ownerNombre').classList.add('extracted'); }
+      if(parsed.apellido1) { document.getElementById('ownerAp1').value=parsed.apellido1; document.getElementById('ownerAp1').classList.add('extracted'); }
+      if(parsed.apellido2) { document.getElementById('ownerAp2').value=parsed.apellido2; document.getElementById('ownerAp2').classList.add('extracted'); }
+      if(parsed.dni) { document.getElementById('ownerDNI').value=parsed.dni; document.getElementById('ownerDNI').classList.add('extracted'); }
+    } else {
+      if(parsed.direccion) { document.getElementById('ownerDir').value=parsed.direccion; document.getElementById('ownerDir').classList.add('extracted'); }
+    }
+  } catch(e) { alert('Error al leer el DNI. Inténtalo de nuevo.'); console.error(e); }
+  document.getElementById('dniLoading').classList.remove('show');
+}
+
+async function handleChip(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  document.getElementById('chipBtn').classList.add('done');
+  document.getElementById('chipBtn').querySelector('p').textContent = '✓ Imagen cargada';
+  document.getElementById('chipLoading').classList.add('show');
+  document.getElementById('chipResult').style.display='none';
+  document.getElementById('chipManual').style.display='none';
+  try {
+    const b64 = await fileToBase64(file);
+    const prompt = `Analiza esta imagen de una etiqueta de microchip para animales. Extrae el número de chip (15 dígitos, empieza por 977 o 978 o 941 o similar). Responde SOLO con JSON sin markdown: {"chip":"numerodeChip"} Si no encuentras el número: {"chip":""}`;
+    const result = await callClaude(prompt, b64, file.type);
+    const parsed = JSON.parse(result.replace(/```json|```/g,'').trim());
+    if(parsed.chip && parsed.chip.length>=10) {
+      document.getElementById('chipNumShow').textContent=parsed.chip;
+      document.getElementById('chipInput').value=parsed.chip;
+      document.getElementById('chipResult').style.display='block';
+    } else { document.getElementById('chipManual').style.display='block'; }
+  } catch(e) { document.getElementById('chipManual').style.display='block'; }
+  document.getElementById('chipLoading').classList.remove('show');
+}
+
+function getChip() { return document.getElementById('chipInput')?.value || document.getElementById('chipManualInput')?.value || ''; }
+
+function buildSummary() {
+  const ownerRows = [
+    ['Nombre', document.getElementById('ownerNombre').value],
+    ['Apellido 1', document.getElementById('ownerAp1').value],
+    ['Apellido 2', document.getElementById('ownerAp2').value],
+    ['DNI', document.getElementById('ownerDNI').value],
+    ['Dirección', document.getElementById('ownerDir').value],
+    ['C.P.', document.getElementById('ownerCP').value],
+    ['Teléfono', document.getElementById('ownerTel').value],
+    ['Email', document.getElementById('ownerEmail').value],
+  ];
+  document.getElementById('summaryOwner').innerHTML = ownerRows.filter(r=>r[1]).map(r=>`<div class="summary-row"><span class="summary-label">${r[0]}</span><span class="summary-value">${r[1]}</span></div>`).join('');
+  const animalRows = [
+    ['Nº chip', getChip()],
+    ['Nombre', document.getElementById('anNombre').value],
+    ['Especie', 'Perro'],
+    ['Raza', document.getElementById('anRaza').value],
+    ['Sexo', document.getElementById('anSexo').value],
+    ['F. nacimiento', document.getElementById('anFecha').value],
+    ['Color/Capa', document.getElementById('anColor').value],
+    ['Tamaño', document.getElementById('anTamano').value],
+    ['Finalidad', document.getElementById('anFinalidad').value],
+    ['Castrado', 'No'],
+    ['Implantación', 'Lado izdo. del cuello'],
+  ];
+  document.getElementById('summaryAnimal').innerHTML = animalRows.filter(r=>r[1]).map(r=>`<div class="summary-row"><span class="summary-label">${r[0]}</span><span class="summary-value">${r[1]}</span></div>`).join('');
+}
+
+function openRAIA() {
+  const datos = `PROPIETARIO:\nNombre: ${document.getElementById('ownerNombre').value}\nApellido 1: ${document.getElementById('ownerAp1').value}\nApellido 2: ${document.getElementById('ownerAp2').value}\nDNI: ${document.getElementById('ownerDNI').value}\nDirección: ${document.getElementById('ownerDir').value}\nC.P.: ${document.getElementById('ownerCP').value}\nTeléfono: ${document.getElementById('ownerTel').value}\n\nANIMAL:\nNº chip: ${getChip()}\nNombre: ${document.getElementById('anNombre').value}\nEspecie: Perro\nRaza: ${document.getElementById('anRaza').value}\nSexo: ${document.getElementById('anSexo').value}\nF. nacimiento: ${document.getElementById('anFecha').value}\nColor/Capa: ${document.getElementById('anColor').value}\nTamaño: ${document.getElementById('anTamano').value}\nFinalidad: ${document.getElementById('anFinalidad').value}\nCastrado: No\nImplantación: Lado izdo. del cuello`;
+  try { navigator.clipboard.writeText(datos); } catch(e) {}
+  window.open('https://raia.es/index.php?operacion=altaPA', '_blank');
+}
+
+checkKey();
+</script>
+</body>
+</html>
