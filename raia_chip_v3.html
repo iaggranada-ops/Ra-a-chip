@@ -197,6 +197,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       Abrir RAIA con estos datos
     </button>
+    <button onclick="enviarWhatsApp()" style="width:100%;margin-top:10px;background:#25D366;color:white;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.524 5.847L.057 23.943l6.235-1.635A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.677-.523-5.193-1.432l-.371-.22-3.851 1.01 1.029-3.752-.242-.386A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      Guardar en WhatsApp
+    </button>
     <button class="btn-back" onclick="goTo(3)" style="width:100%;margin-top:10px;padding:12px;border-radius:12px;cursor:pointer;">← Corregir algo</button>
   </div>
 
@@ -343,6 +347,34 @@ function buildSummary() {
     ['Implantación', 'Lado izdo. del cuello'],
   ];
   document.getElementById('summaryAnimal').innerHTML = animalRows.filter(r=>r[1]).map(r=>`<div class="summary-row"><span class="summary-label">${r[0]}</span><span class="summary-value">${r[1]}</span></div>`).join('');
+}
+
+function enviarWhatsApp() {
+  const chip = getChip();
+  const texto = `🐾 *ALTA CHIP RAIA*
+
+*PROPIETARIO:*
+Nombre: ${document.getElementById('ownerNombre').value} ${document.getElementById('ownerAp1').value} ${document.getElementById('ownerAp2').value}
+DNI: ${document.getElementById('ownerDNI').value}
+Dirección: ${document.getElementById('ownerDir').value}
+C.P.: ${document.getElementById('ownerCP').value}
+Teléfono: ${document.getElementById('ownerTel').value}
+Email: ${document.getElementById('ownerEmail').value}
+
+*ANIMAL:*
+Nº chip: ${chip}
+Nombre: ${document.getElementById('anNombre').value}
+Especie: Perro
+Raza: ${document.getElementById('anRaza').value}
+Sexo: ${document.getElementById('anSexo').value}
+F. nacimiento: ${document.getElementById('anFecha').value}
+Color/Capa: ${document.getElementById('anColor').value}
+Tamaño: ${document.getElementById('anTamano').value}
+Finalidad: ${document.getElementById('anFinalidad').value}
+Castrado: No
+Implantación: Lado izdo. del cuello`;
+  const url = 'https://wa.me/?text=' + encodeURIComponent(texto);
+  window.open(url, '_blank');
 }
 
 function openRAIA() {
